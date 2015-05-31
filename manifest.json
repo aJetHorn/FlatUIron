@@ -3,22 +3,21 @@
 
 	"name": "FlatUIron",
 	"description": "Flattens colors on a webpage",
-	"version": "0.0.0",
+	"version": "1.0.0",
 
 	"browser_action": {
-		"default_icon": "iron1.png",
-		//"default_popup": "popup.html",
+		"default_icon": "images/iron1.png",
 		"default_title": "FlatUIron"
 	},
 	"background":{
-		"scripts":["background.js"]
+		"scripts":["script/background.js"]
 	},
 	"permissions": [
 		"activeTab",
 		"https://ajax.googleapis.com/"
 	],
 	"content_scripts": [ {
-		"js": ["jquery-2.1.4.min.js", "content.js"],
+		"js": ["script/jquery-2.1.4.min.js", "script/content.js"],
 		"matches": [ "http://*/*", "https://*/*"]
 		}]
 }

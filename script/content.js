@@ -1,3 +1,8 @@
+/*
+* This contains the bones of FlatUIron
+* The program iterates over all elements on a page and changes colors to the closest matching FlatUI color
+*/
+
 //FlatColors is a built-in color palette sourced from http://flatuicolors.com/
 var FlatColors = [
   ["Turquoise", "#1abc9c", {R:26, G:188, B:156}],
@@ -24,17 +29,113 @@ var FlatColors = [
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if( request.message === "clicked_browser_action" ) {
-      // var firstHref = $("a[href^='http']").eq(0).attr("href");
-      //$("body").prepend("Working...");
+      //For development (no syntax errors): $("body").prepend("Working...");
 
-      //console.log($("body").css("backgroundColor"));
-      //console.log(parseRGB("rgb(0, 1, 5)"));
       flatUIron();
-      //console.log(findClosestColorMatch({R:0,G:0,B:0},FlatColors));
-      //$("body").css({"backgroundColor": "rgb(0,0,0)"});
     }
   }
 );
+
+//iterate over all elements, detect colors, change colors to closest matching flat colors, as defined above
+function flatUIron(){
+  flattenBackgroundColor($("body"));
+	$('body *').each(function(index, element){
+    flattenColors(element);
+    //future functionality could remove shadows and gradients
+	});
+}
+
+//returns a flattened RGB color
+//Expects RGB object
+function flattenColors(element){
+  flattenBackgroundColor(element);
+  flattenFontColor(element);
+  //flattenBorderColors(element);
+}
+
+function flattenBackgroundColor(element){
+  var originalColor = $(element).css("backgroundColor");
+  //console.log("original color: " + originalColor);
+  if (originalColor == "rgb(0, 0, 0)"){
+    $(element).css({"backgroundColor": "#2c3e50"});
+    return;
+  }
+  if (originalColor == "rgb(255, 255, 255)"){
+    $(element).css({"backgroundColor": "#ecf0f1"});
+    return;
+  }
+  var originalColorRGB = parseRGB(originalColor);
+  //console.log("original color RGB: " + originalColorRGB.R + originalColorRGB.G + originalColorRGB.B);
+  var closestMatch = findClosestColorMatch(originalColorRGB, FlatColors);
+  //console.log(closestMatch);
+  var optionalA = "";
+  var optionalAValue = "";
+  if (originalColorRGB.A != undefined){
+    optionalA = "a";
+    optionalAValue = originalColorRGB.A;
+  }
+  $(element).css({"backgroundColor": "rgb" + optionalA +"(" + closestMatch.R + "," + closestMatch.G + "," + closestMatch.B + optionalAValue + ")"});
+}
+
+function flattenFontColor(element){
+  //font color of empty elements is irrelevant
+  if ($(element).text() == ""){
+    return;
+  }
+  var originalColor = $(element).css("color");
+  //console.log("original color: " + originalColor);
+  var originalColorRGB = parseRGB(originalColor);
+  //console.log("original color RGB: " + originalColorRGB.R + originalColorRGB.G + originalColorRGB.B);
+  var closestMatch = findClosestColorMatch(originalColorRGB, FlatColors);
+  //console.log(closestMatch);
+
+  $(element).css({"color": "rgb(" + closestMatch.R + "," + closestMatch.G + "," + closestMatch.B + ")"});
+
+}
+
+//non-essential
+function flattenBorderColors(element){
+
+}
+
+//expects rgb(r,g,b) or rgba(r,g,b,a) string
+function parseRGB(RGB){
+  var colors = RGB.substring(0, RGB.length-1);
+  colors = colors.split("(")[1];
+  colors = colors.split(",");
+  //handles a to preserve transparency
+  var optionalA = undefined;
+  if (RGB.indexOf("a") > -1){
+    optionalA = parseInt(colors[3].trim());
+  }
+  var returnObject = {R: parseInt(colors[0].trim()), G: parseInt(colors[1].trim()), B: parseInt(colors[2].trim()), A: optionalA};
+  //console.log(returnObject);
+  return returnObject;
+}
+
+//expects formatted rgb object
+//returns RGB object
+function findClosestColorMatch(inputRGB, ColorPalette){
+  var closestMatchName = ColorPalette[0][0];
+  var closestMatchHex = ColorPalette[0][1];
+  var closestMatchRGB = ColorPalette[0][2];
+  var smallestDifference = 9999;
+
+  for (var i = 0; i < ColorPalette.length; i++){
+    var difference = Math.abs(inputRGB.R - ColorPalette[i][2].R) + Math.abs(inputRGB.G - ColorPalette[i][2].G) + Math.abs(inputRGB.B - ColorPalette[i][2].B);
+    if (difference < smallestDifference){
+      smallestDifference = difference;
+      closestMatchName = ColorPalette[i][0];
+      closestMatchHex = ColorPalette[i][1];
+      closestMatchRGB = ColorPalette[i][2]
+    }
+  }
+  // console.log(closestMatchName);
+  // console.log(closestMatchHex);
+  // console.log(closestMatchRGB);
+  // console.log(smallestDifference);
+  return closestMatchRGB;
+}
 
 /*
 * Turquoise: #1abc9c rgb(26, 188, 156)
@@ -65,130 +166,9 @@ chrome.runtime.onMessage.addListener(
 */
 
 /*
-* border-color, color, background-color
-*
-*/
-
-/*
 * Websites with flat colors:
 * http://flatuicolors.com/
 * http://www.flatuicolorpicker.com/
 * http://bootflat.github.io/color-picker.html
 * 
 */
-
-//iterate over all elements, detect colors, change colors to closest matching flat colors, as defined above
-function flatUIron(){
-	//iterate over each element on the dom
-  flattenBackgroundColor($("body"));
-	$('body *').each(function(index, element){
-		//console.log(this.css());
-    //console.log(element.css("backgroundColor"));
-    //console.log(this);
-    //console.log($(element).css("backgroundColor"));
-    //console.log($(element).css("color"));
-    //$(element).css({"backgroundColor": "rgb(0,0,0)"});
-    flattenColors(element);
-    //console.log($(element).attr('style').indexOf('backgroundColor'));
-    // if ($('element[style*="backgroundColor"]').length > 0){
-    //   console.log("yerp");
-    // }
-	});
-}
-
-//returns a flattened RGB color
-//Expects RGB object
-function flattenColors(element){
-  flattenBackgroundColor(element);
-  flattenFontColor(element);
-  //flattenBorderColors(element);
-  //$(element).css({"backgroundColor": findClosestColorMatch(parseRGB($(element).css("backgroundColor")), FlatColors)});
-}
-
-function flattenBackgroundColor(element){
-  var originalColor = $(element).css("backgroundColor");
-  console.log("original color: " + originalColor);
-  if (originalColor == "rgb(0, 0, 0)"){
-    $(element).css({"backgroundColor": "#2c3e50"});
-    console.log("black");
-    return;
-  }
-  if (originalColor == "rgb(255, 255, 255)"){
-    $(element).css({"backgroundColor": "#ecf0f1"});
-    console.log("white");
-    return;
-  }
-  var originalColorRGB = parseRGB(originalColor);
-  console.log("original color RGB: " + originalColorRGB.R + originalColorRGB.G + originalColorRGB.B);
-  var closestMatch = findClosestColorMatch(originalColorRGB, FlatColors);
-  console.log(closestMatch);
-  var optionalA = "";
-  var optionalAValue = "";
-  if (originalColorRGB.A != undefined){
-    optionalA = "a";
-    optionalAValue = originalColorRGB.A;
-  }
-  $(element).css({"backgroundColor": "rgb" + optionalA +"(" + closestMatch.R + "," + closestMatch.G + "," + closestMatch.B + optionalAValue + ")"});
-}
-
-function flattenFontColor(element){
-  if ($(element).text() == ""){
-    return;
-  }
-  var originalColor = $(element).css("color");
-  console.log("original color: " + originalColor);
-  var originalColorRGB = parseRGB(originalColor);
-  console.log("original color RGB: " + originalColorRGB.R + originalColorRGB.G + originalColorRGB.B);
-  var closestMatch = findClosestColorMatch(originalColorRGB, FlatColors);
-  console.log(closestMatch);
-
-  $(element).css({"color": "rgb(" + closestMatch.R + "," + closestMatch.G + "," + closestMatch.B + ")"});
-
-}
-
-function flattenBorderColors(element){
-
-}
-
-
-//expects rgb(r,g,b) or rgba(r,g,b,a) string
-function parseRGB(RGB){
-  var colors = RGB.substring(0, RGB.length-1);
-  colors = colors.split("(")[1];
-  colors = colors.split(",");
-  //console.log(colors);
-  var optionalA = undefined;
-  if (RGB.indexOf("a") > -1){
-    optionalA = parseInt(colors[3].trim());
-  }
-  var returnObject = {R: parseInt(colors[0].trim()), G: parseInt(colors[1].trim()), B: parseInt(colors[2].trim()), A: optionalA};
-  console.log(returnObject);
-  return returnObject;
-}
-
-//var RGB ={R:num, G:num, B:num};
-
-//expects formatted rgb object
-//ColorPalette objects: name, rgb
-//returns RGB object
-function findClosestColorMatch(inputRGB, ColorPalette){
-  var closestMatchName = ColorPalette[0][0];
-  var closestMatchHex = ColorPalette[0][1];
-  var closestMatchRGB = ColorPalette[0][2];
-  var smallestDifference = 9999;
-
-  for (var i = 0; i < ColorPalette.length; i++){
-    var difference = Math.abs(inputRGB.R - ColorPalette[i][2].R) + Math.abs(inputRGB.G - ColorPalette[i][2].G) + Math.abs(inputRGB.B - ColorPalette[i][2].B);
-    if (difference < smallestDifference){
-      smallestDifference = difference;
-      closestMatchName = ColorPalette[i][0];
-      closestMatchHex = ColorPalette[i][1];
-      closestMatchRGB = ColorPalette[i][2]
-    }
-  }
-  // console.log(closestMatchName);
-  // console.log(closestMatchHex);
-  // console.log(closestMatchRGB);
-  // console.log(smallestDifference);
-  return closestMatchRGB;
-}

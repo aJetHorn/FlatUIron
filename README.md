@@ -2,6 +2,9 @@
 
 FlatUIron is a novelty extension for Google Chrome that "flattens" all font and background colors on a webpage to a small palette of colors known as [FlatUI colors](http://flatuicolors.com/). Color schemes using similar palettes are commonly considered to exhibit [Flat Design](http://en.wikipedia.org/wiki/Flat_design).
 
+### Testing
+I did the majority of testing using my [Color Inversion Project](http://aJetHorn.github.io/ColorInvert).
+
 ### Future Improvements
 
 Future versions will be faster and use expanded color palettes (feel free to add your own). Additionally I'd like to add a revert feature and a significantly-less-resource-intensive stylesheet parser that also targets pseudoclass css.
